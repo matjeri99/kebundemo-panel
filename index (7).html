@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KebunDemo · Panel Kawalan</title>
+<meta name="theme-color" content="#16301F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --dark: #16301F; --cream: #F5F2E9; --cream2: #E7EEDC; --card: #FFFDF7;
+    --leaf: #7CC255; --green: #356B1C; --amber: #F2A93B; --red: #C2410C;
+    --ink: #1D2A21; --muted: #5A6B5F; --line: #D3DCC8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--cream); color: var(--ink); }
+  h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
+  header { background: var(--dark); color: var(--cream); padding: 16px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 20px; flex: 1; }
+  header h1 small { display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px; color: #C5D3C1; }
+  .pill { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+  .pill.on { background: var(--leaf); color: var(--dark); }
+  .pill.off { background: #5A3A2A; color: #FFD9C7; }
+  .ikon { background: none; border: 1px solid #3C5A46; color: var(--cream); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-size: 16px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 860px) { main { grid-template-columns: 340px 1fr; } .span2 { grid-column: 1 / -1; } }
+  .kad { background: var(--card); border-radius: 18px; padding: 20px; border-top: 6px solid var(--leaf); box-shadow: 0 1px 2px rgba(22,48,31,.06); }
+  .kad h2 { font-size: 16px; margin-bottom: 14px; color: var(--green); text-transform: uppercase; letter-spacing: .06em; }
+  .tolok { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .tolok svg { width: 200px; height: 200px; }
+  .tolok .nilai { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 44px; fill: var(--ink); }
+  .tolok .label { font-size: 14px; fill: var(--muted); }
+  .keadaan { font-weight: 700; padding: 6px 14px; border-radius: 999px; font-size: 14px; }
+  .keadaan.ok { background: var(--cream2); color: var(--green); }
+  .keadaan.kering { background: #FDE8C8; color: #8A4B00; }
+  .keadaan.ralat { background: #FBD5C5; color: var(--red); }
+  .senarai { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; margin-top: 16px; font-size: 15px; }
+  .senarai dt { color: var(--muted); }
+  .senarai dd { margin: 0; font-weight: 600; text-align: right; }
+  .butang { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  button.b { font-family: inherit; font-size: 15px; font-weight: 700; border: none; border-radius: 12px; padding: 14px 10px; cursor: pointer; transition: transform .08s, opacity .2s; }
+  button.b:active { transform: scale(.97); }
+  button.b:disabled { opacity: .5; cursor: not-allowed; }
+  .b.siram { background: var(--green); color: var(--cream); }
+  .b.stop { background: var(--red); color: #FFF7F2; grid-column: 1 / -1; }
+  .b.auto { background: var(--dark); color: var(--cream); grid-column: 1 / -1; }
+  .b.kedua { background: var(--cream2); color: var(--dark); }
+  .ambang { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .ambang label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; }
+  .ambang .baris { display: flex; gap: 10px; align-items: center; }
+  input[type=range] { flex: 1; accent-color: var(--green); }
+  .nota { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .menunggu { background: #FFF4DC; color: #7A4A00; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; display: none; }
+  .carta { position: relative; height: 280px; }
+  .log { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; }
+  .log li { display: grid; grid-template-columns: 70px 90px 1fr; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .log .masa { color: var(--muted); }
+  .log .jenis { font-weight: 700; font-size: 12px; }
+  .jenis.PAM { color: var(--green); } .jenis.AMARAN { color: var(--red); } .jenis.TETAPAN { color: #2563A8; }
+  .tetapan { max-width: 480px; margin: 40px auto; }
+  .tetapan label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  .tetapan input { width: 100%; padding: 12px; font-size: 15px; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; }
+  .tetapan .b { width: 100%; margin-top: 18px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: var(--cream); padding: 12px 18px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90vw; text-align: center; }
+  .toast.papar { opacity: 1; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); padding: 10px 0 30px; }
+  .tersembunyi { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KebunDemo <small>Panel Kawalan Siraman Pasu Pintar</small></h1>
+  <span id="pillTalian" class="pill off">Menyemak...</span>
+  <button class="ikon" id="btnTetapan" title="Tetapan">⚙</button>
+</header>
+
+<!-- Skrin tetapan -->
+<section id="skrinTetapan" class="tetapan kad tersembunyi">
+  <h2>Tetapan sambungan</h2>
+  <p class="nota">Masukkan URL Web App Apps Script dan kunci API. Maklumat ini disimpan dalam pelayar ini sahaja.</p>
+  <label for="inUrl">URL Web App</label>
+  <input id="inUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+  <label for="inKunci">Kunci API</label>
+  <input id="inKunci" type="password" placeholder="Kunci dari log setup()">
+  <button class="b siram" id="btnSimpan">Simpan dan sambung</button>
+</section>
+
+<!-- Papan pemuka -->
+<main id="papan" class="tersembunyi">
+  <section class="kad">
+    <h2>Kelembapan tanah</h2>
+    <div class="tolok">
+      <svg viewBox="0 0 200 200" aria-label="Tolok kelembapan">
+        <circle cx="100" cy="100" r="80" fill="none" stroke="#E7EEDC" stroke-width="18"/>
+        <circle id="arka" cx="100" cy="100" r="80" fill="none" stroke="#7CC255" stroke-width="18"
+                stroke-linecap="round" stroke-dasharray="502.65" stroke-dashoffset="502.65"
+                transform="rotate(-90 100 100)" style="transition: stroke-dashoffset .6s, stroke .3s"/>
+        <text id="txtNilai" class="nilai" x="100" y="108" text-anchor="middle">--%</text>
+        <text class="label" x="100" y="134" text-anchor="middle">kelembapan</text>
+      </svg>
+      <span id="keadaan" class="keadaan ok">--</span>
+    </div>
+    <dl class="senarai">
+      <dt>Pam</dt><dd id="dPam">--</dd>
+      <dt>Mod auto</dt><dd id="dAuto">--</dd>
+      <dt>Ambang kering</dt><dd id="dAmbang">--</dd>
+      <dt>Bacaan raw</dt><dd id="dRaw">--</dd>
+      <dt>Isyarat WiFi</dt><dd id="dRssi">--</dd>
+      <dt>Kemas kini terakhir</dt><dd id="dMasa">--</dd>
+    </dl>
+  </section>
+
+  <section class="kad">
+    <h2>Kawalan</h2>
+    <div class="butang">
+      <button class="b siram" data-cmd="siram" data-nilai="5">Siram 5 s</button>
+      <button class="b siram" data-cmd="siram" data-nilai="10">Siram 10 s</button>
+      <button class="b siram" data-cmd="siram" data-nilai="20">Siram 20 s</button>
+      <button class="b auto" id="btnAuto" data-cmd="auto_off">Matikan mod auto</button>
+      <button class="b stop" data-cmd="stop">STOP pam</button>
+    </div>
+    <div class="ambang">
+      <label for="inAmbang"><span>Ambang kering</span><span id="lblAmbang">40%</span></label>
+      <div class="baris">
+        <input id="inAmbang" type="range" min="10" max="90" step="5" value="40">
+        <button class="b kedua" id="btnAmbang">Simpan</button>
+      </div>
+    </div>
+    <div id="menunggu" class="menunggu"></div>
+    <p class="nota">Arahan dihantar melalui Google Sheet. ESP32 mengambil arahan setiap 15 saat. Arahan yang tidak diambil dalam 5 minit akan dibatalkan secara automatik.</p>
+  </section>
+
+  <section class="kad span2">
+    <h2>Kelembapan 24 jam</h2>
+    <div class="carta"><canvas id="carta"></canvas></div>
+  </section>
+
+  <section class="kad span2">
+    <h2>Log peristiwa</h2>
+    <ul id="log" class="log"><li><span class="masa">--</span><span></span><span>Tiada data lagi</span></li></ul>
+  </section>
+</main>
+
+<footer>KebunDemo · D77Tech / AgroFix Malaysia · <i>SrieMatjeri</i></footer>
+<div id="toast" class="toast"></div>
+
+<script>
+const KS = { url: 'kebundemo_url', kunci: 'kebundemo_kunci' };
+const SELA_REFRESH = 10000;
+let cfg = { url: baca(KS.url), kunci: baca(KS.kunci) };
+let carta = null, pemasa = null, statusTerkini = null, ambangDiubah = false;
+
+function baca(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function tulis(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+const $ = id => document.getElementById(id);
+
+function toast(mesej) {
+  const t = $('toast');
+  t.textContent = mesej;
+  t.classList.add('papar');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('papar'), 3500);
+}
+
+async function api(param) {
+  const u = new URL(cfg.url);
+  u.searchParams.set('key', cfg.kunci);
+  Object.entries(param).forEach(([k, v]) => u.searchParams.set(k, v));
+  const r = await fetch(u.toString(), { redirect: 'follow' });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.ralat || 'Ralat tidak diketahui');
+  return j;
+}
+
+function jam(ms) {
+  if (!ms) return '--';
+  return new Date(ms).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+}
+
+function lalu(ms) {
+  if (!ms) return 'belum pernah';
+  const s = Math.round((Date.now() - ms) / 1000);
+  if (s < 60) return s + ' saat lalu';
+  if (s < 3600) return Math.round(s / 60) + ' minit lalu';
+  return jam(ms);
+}
+
+function paparStatus(d) {
+  const s = d.status;
+  statusTerkini = s;
+  const k = Number(s.kelembapan) || 0;
+  const ambang = Number(s.ambang) || 40;
+  const sensorOK = s.sensor === 'YA';
+  const kering = k < ambang;
+
+  // Pil dalam talian
+  const pil = $('pillTalian');
+  pil.textContent = s.dalamTalian ? 'Dalam talian' : 'Luar talian';
+  pil.className = 'pill ' + (s.dalamTalian ? 'on' : 'off');
+
+  // Tolok
+  const C = 502.65;
+  $('arka').setAttribute('stroke-dashoffset', C * (1 - k / 100));
+  $('arka').setAttribute('stroke', !sensorOK ? '#C2410C' : kering ? '#F2A93B' : '#7CC255');
+  $('txtNilai').textContent = s.masa ? k + '%' : '--%';
+  const kd = $('keadaan');
+  if (!s.masa) { kd.textContent = 'Menunggu data ESP32'; kd.className = 'keadaan ralat'; }
+  else if (!sensorOK) { kd.textContent = 'Sensor bermasalah'; kd.className = 'keadaan ralat'; }
+  else if (kering) { kd.textContent = 'Kering'; kd.className = 'keadaan kering'; }
+  else { kd.textContent = 'Lembap'; kd.className = 'keadaan ok'; }
+
+  // Senarai
+  $('dPam').textContent = s.pam || '--';
+  $('dAuto').textContent = s.auto || '--';
+  $('dAmbang').textContent = s.masa ? ambang + '%' : '--';
+  $('dRaw').textContent = s.raw !== '' ? s.raw : '--';
+  $('dRssi').textContent = s.rssi !== '' ? s.rssi + ' dBm' : '--';
+  $('dMasa').textContent = lalu(s.masa);
+
+  // Butang auto
+  const ba = $('btnAuto');
+  const autoOn = s.auto === 'ON';
+  ba.dataset.cmd = autoOn ? 'auto_off' : 'auto_on';
+  ba.textContent = autoOn ? 'Matikan mod auto' : 'Hidupkan mod auto';
+
+  // Slider ambang (jangan ganggu jika pengguna sedang ubah)
+  if (!ambangDiubah && s.masa) {
+    $('inAmbang').value = ambang;
+    $('lblAmbang').textContent = ambang + '%';
+  }
+
+  // Arahan menunggu
+  const m = $('menunggu');
+  if (d.menunggu > 0) {
+    m.style.display = 'block';
+    m.textContent = d.menunggu + ' arahan menunggu diambil oleh ESP32' + (s.dalamTalian ? ' (dalam 15 saat).' : '. ESP32 kini luar talian.');
+  } else {
+    m.style.display = 'none';
+  }
+
+  paparCarta(d.sejarah, ambang);
+  paparLog(d.log);
+}
+
+function paparCarta(sejarah, ambang) {
+  const label = sejarah.map(r => jam(r[0]));
+  const nilai = sejarah.map(r => r[1]);
+  const garisAmbang = sejarah.map(() => ambang);
+  if (!carta) {
+    carta = new Chart($('carta'), {
+      type: 'line',
+      data: {
+        labels: label,
+        datasets: [
+          { label: 'Kelembapan (%)', data: nilai, borderColor: '#356B1C', backgroundColor: 'rgba(124,194,85,.18)', fill: true, tension: .3, pointRadius: 0, borderWidth: 2 },
+          { label: 'Ambang kering (%)', data: garisAmbang, borderColor: '#F2A93B', borderDash: [6, 6], pointRadius: 0, borderWidth: 2, fill: false },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#E7EEDC' } },
+          x: { ticks: { maxTicksLimit: 8, autoSkip: true }, grid: { display: false } },
+        },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14 } } },
+      },
+    });
+  } else {
+    carta.data.labels = label;
+    carta.data.datasets[0].data = nilai;
+    carta.data.datasets[1].data = garisAmbang;
+    carta.update();
+  }
+}
+
+function paparLog(log) {
+  const ul = $('log');
+  ul.innerHTML = '';
+  if (!log.length) {
+    ul.innerHTML = '<li><span class="masa">--</span><span></span><span>Tiada peristiwa lagi</span></li>';
+    return;
+  }
+  log.forEach(l => {
+    const li = document.createElement('li');
+    const a = document.createElement('span'); a.className = 'masa'; a.textContent = jam(l.masa);
+    const b = document.createElement('span'); b.className = 'jenis ' + l.jenis; b.textContent = l.jenis;
+    const c = document.createElement('span'); c.textContent = l.mesej;
+    li.append(a, b, c);
+    ul.appendChild(li);
+  });
+}
+
+async function segarkan() {
+  try {
+    const d = await api({ action: 'status', n: 288 });
+    paparStatus(d);
+  } catch (e) {
+    $('pillTalian').textContent = 'Ralat sambungan';
+    $('pillTalian').className = 'pill off';
+    console.error(e);
+  }
+}
+
+async function hantarArahan(cmd, nilai, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await api({ action: 'cmd', cmd: cmd, nilai: nilai || 0, sumber: 'Panel Web' });
+    const nama = { siram: 'Siram ' + nilai + ' saat', stop: 'STOP pam', auto_on: 'Mod auto ON', auto_off: 'Mod auto OFF', ambang: 'Ambang ' + nilai + '%' }[cmd];
+    toast(nama + ': arahan dihantar. ESP32 akan laksana dalam ~15 saat.');
+    if (statusTerkini && !statusTerkini.dalamTalian) toast('Arahan disimpan, tetapi ESP32 luar talian. Arahan luput selepas 5 minit.');
+    segarkan();
+  } catch (e) {
+    toast('Gagal: ' + e.message);
+  } finally {
+    if (btn) setTimeout(() => (btn.disabled = false), 1500);
+  }
+}
+
+function mula() {
+  if (!cfg.url || !cfg.kunci) {
+    $('skrinTetapan').classList.remove('tersembunyi');
+    $('papan').classList.add('tersembunyi');
+    $('inUrl').value = cfg.url;
+    return;
+  }
+  $('skrinTetapan').classList.add('tersembunyi');
+  $('papan').classList.remove('tersembunyi');
+  segarkan();
+  clearInterval(pemasa);
+  pemasa = setInterval(segarkan, SELA_REFRESH);
+}
+
+// Acara
+document.querySelectorAll('.butang .b').forEach(b => {
+  b.addEventListener('click', () => {
+    const cmd = b.dataset.cmd;
+    if (cmd === 'stop' || cmd.startsWith('auto') || confirm('Hidupkan pam ' + b.dataset.nilai + ' saat?')) {
+      hantarArahan(cmd, Number(b.dataset.nilai || 0), b);
+    }
+  });
+});
+$('inAmbang').addEventListener('input', e => { ambangDiubah = true; $('lblAmbang').textContent = e.target.value + '%'; });
+$('btnAmbang').addEventListener('click', e => { ambangDiubah = false; hantarArahan('ambang', Number($('inAmbang').value), e.target); });
+$('btnSimpan').addEventListener('click', () => {
+  const url = $('inUrl').value.trim(), kunci = $('inKunci').value.trim();
+  if (!url.startsWith('https://script.google.com/') || !kunci) { toast('Semak URL dan kunci API.'); return; }
+  cfg = { url, kunci };
+  tulis(KS.url, url); tulis(KS.kunci, kunci);
+  mula();
+});
+$('btnTetapan').addEventListener('click', () => {
+  clearInterval(pemasa);
+  $('papan').classList.add('tersembunyi');
+  $('skrinTetapan').classList.remove('tersembunyi');
+  $('inUrl').value = cfg.url;
+});
+
+mula();
+</script>
+</body>
+</html>
