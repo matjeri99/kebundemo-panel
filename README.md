@@ -21,7 +21,8 @@ Projek demo untuk kursus Asas IoT untuk Pengurusan Kebun. Satu pasu bunga disira
 kebundemo-panel/
 ├── index.html                    Panel kawalan web (GitHub Pages)
 ├── apps-script/Code.gs           Backend Google Apps Script
-└── esp32/KebunDemo/KebunDemo.ino Kod ESP32
+├── esp32/KebunDemo/KebunDemo.ino Kod ESP32 DevKit
+└── esp32/KebunDemo_CYD/          Versi CYD dengan skrin sentuh (lihat bahagian 12)
 ```
 
 ---
@@ -201,6 +202,52 @@ Tetapan ambang dan mod auto disimpan dalam memori ESP32, kekal walaupun kuasa te
 - Panel web **tidak serta-merta**: ESP32 ambil arahan setiap 15 saat. Telegram lebih pantas (1 saat).
 - Arahan yang tidak diambil dalam 5 minit dibatalkan, supaya pam tidak hidup mengejut bila ESP32 kembali dalam talian.
 - Kod ESP32 guna `setInsecure()` untuk sambungan ke Google (sesuai untuk demo). Untuk sistem sebenar, gunakan sijil root Google.
+
+---
+
+## 12. Versi CYD (ESP32-2432S028R) dengan skrin sentuh
+
+Fail: `esp32/KebunDemo_CYD/KebunDemo_CYD.ino`. Fungsi sama seperti versi DevKit, ditambah **panel ketiga**: skrin sentuh di pasu yang berfungsi walaupun tanpa internet.
+
+**Pendawaian CYD (berbeza daripada DevKit):**
+
+| Komponen | Pin CYD | Penyambung | Sebab |
+|---|---|---|---|
+| Sensor AOUT | GPIO35 | P3 | GPIO34 sudah digunakan oleh LDR terbina dalam |
+| Sensor VCC / GND | 3.3V / GND | CN1 | |
+| Relay IN | GPIO22 | CN1 atau P3 | GPIO26 ialah speaker |
+| Relay VCC / GND | 5V / GND | P1 | |
+| LED status | GPIO4 | terbina dalam | GPIO2 ialah DC skrin, tidak boleh guna |
+
+Pam tetap guna adaptor 5V sendiri melalui relay (COM / NO), sama seperti versi DevKit.
+
+**Library tambahan:** LovyanGFX.
+
+**Paparan skrin (320 × 240):**
+
+```
+┌──────────────────────────────────────────┐
+│ KebunDemo              WiFi OK   Web OK  │
+│                    Pam            MATI   │
+│   ╭─────────╮      Auto             ON   │
+│   │   42%   │      Ambang          40%   │
+│   ╰─  ▲  ──╯      [ - 5% ]  [ + 5% ]    │
+│     LEMBAP         raw 2310 | -58 dBm    │
+│ [  SIRAM  ]  [  STOP  ]  [ AUTO: ON ]    │
+└──────────────────────────────────────────┘
+```
+
+- Tolok hijau (lembap), oren (kering), merah (sensor rosak), dengan garis penanda ambang.
+- Arahan dari Telegram dan panel web dipaparkan seketika di skrin.
+- Perubahan dari skrin turut dilaporkan ke Telegram dan disimpan dalam Google Sheet.
+
+**Jika paparan atau sentuhan tidak betul:**
+
+- Terbalik/cermin: tukar `ROTASI_SKRIN` (cuba 1 atau 3).
+- Warna pelik / skrin putih: CYD versi 2 USB guna ST7789, tukar `lgfx::Panel_ILI9341` kepada `lgfx::Panel_ST7789`.
+- Sentuhan tersasar: lihat `[SENTUH] x=.. y=..` dalam Serial Monitor, laraskan `x_min/x_max/y_min/y_max` atau `offset_rotation` dalam bahagian `_touch`.
+
+**Had:** semasa ESP32 menghubungi Telegram atau Google (kira-kira 1 saat), sentuhan mungkin lambat sedikit. Itu normal.
 
 ---
 
