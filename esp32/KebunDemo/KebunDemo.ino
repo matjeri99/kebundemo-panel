@@ -1,6 +1,6 @@
 /*
   ============================================================
-  KebunDemo v1.1 - Siraman Pasu Pintar: Telegram + Panel Web
+  KebunDemo v1.3 - Siraman Pasu Pintar: Telegram + Panel Web + OLED
   ------------------------------------------------------------
   Demo kursus: Asas IoT untuk Pengurusan Kebun
   Formula IoT: SENSOR (rasa) -> ESP32 (fikir) -> PAM (buat) -> TELEFON (lapor)
@@ -10,7 +10,9 @@
 
   Perkakasan : ESP32 DevKit V1, sensor kelembapan tanah kapasitif v1.2,
                modul relay 1 saluran, pam air mini 5V
-  Library    : UniversalTelegramBot (Brian Lough), ArduinoJson
+  Paparan    : OLED 0.96" SSD1306 128x64 I2C (SDA=GPIO21, SCL=GPIO22, VCC=3.3V)
+  Library    : UniversalTelegramBot (Brian Lough), ArduinoJson,
+               Adafruit SSD1306, Adafruit GFX
   Oleh       : SrieMatjeri / D77Tech
   ============================================================
 */
@@ -21,6 +23,9 @@
 #include <UniversalTelegramBot.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 // ================= TETAPAN PENGGUNA (UBAH DI SINI) =================
 const char* WIFI_SSID = "NAMA_WIFI";
@@ -41,6 +46,11 @@ const int  PIN_SENSOR      = 34;    // Mesti pin ADC1 (32-39). ADC2 tidak berfun
 const int  PIN_RELAY       = 26;
 const int  PIN_LED         = 2;     // LED biru pada papan, menyala bila pam hidup
 const bool RELAY_AKTIF_LOW = true;  // Kebanyakan modul relay murah aktif LOW
+
+// OLED (jika tiada OLED, sistem tetap berjalan seperti biasa)
+const int     PIN_SDA     = 21;
+const int     PIN_SCL     = 22;
+const uint8_t OLED_ALAMAT = 0x3C;    // sesetengah modul guna 0x3D
 
 // Kalibrasi sensor (guna arahan /kalibrasi untuk dapatkan nilai sebenar)
 int NILAI_KERING = 3000;  // bacaan raw sensor di udara / tanah kering
@@ -77,12 +87,41 @@ unsigned long jumlahSiraman = 0;
 
 unsigned long akhirBaca = 0, akhirBot = 0, akhirWifi = 0, akhirSkrip = 0;
 bool skripAktif = false;
+bool skripOK    = false;  // hubungan terakhir dengan Apps Script berjaya?
 bool paksaData  = false;
 
 // Baris gilir log untuk Apps Script (dihantar bila pam tidak hidup)
 const int MAKS_LOG = 6;
 String logJenis[MAKS_LOG], logMesej[MAKS_LOG];
 int bilLog = 0;
+
+// OLED
+Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+bool oledOK = false;
+String mesejOled = "";
+unsigned long mesejOledTamat = 0, akhirOled = 0;
+const unsigned long SELA_OLED = 500;
+
+void paparMesej(const String& m) {
+  mesejOled = m.substring(0, 21);  // satu baris OLED = 21 aksara
+  mesejOledTamat = millis() + 4000;
+}
+
+void oledBoot(const String& baris1, const String& baris2) {
+  if (!oledOK) return;
+  oled.clearDisplay();
+  oled.setTextColor(SSD1306_WHITE);
+  oled.setTextSize(1);
+  oled.setCursor(0, 0);  oled.print("KebunDemo v1.3");
+  oled.setCursor(0, 24); oled.print(baris1);
+  oled.setCursor(0, 40); oled.print(baris2);
+  oled.display();
+}
+
+void bulatan(int x, bool penuh) {
+  if (penuh) oled.fillCircle(x, 3, 3, SSD1306_WHITE);
+  else oled.drawCircle(x, 3, 3, SSD1306_WHITE);
+}
 
 // ---------------- Fungsi bantu ----------------
 void relayTulis(bool hidup) {
@@ -159,6 +198,7 @@ void pamOn(unsigned long ms, const String& sebab) {
   paksaData = true;
   tambahLog("PAM", "Pam HIDUP " + String(ms / 1000) + " s - " + sebab);
   Serial.printf("[PAM] HIDUP %lu ms - %s\n", ms, sebab.c_str());
+  lukisOled();
 }
 
 void pamOff(const String& sebab) {
@@ -170,6 +210,7 @@ void pamOff(const String& sebab) {
   paksaData   = true;
   tambahLog("PAM", "Pam MATI - " + sebab);
   Serial.printf("[PAM] MATI - %s\n", sebab.c_str());
+  lukisOled();
   hantarSemua("✅ Pam MATI (" + sebab + ")\nKelembapan semasa: " + String(kelembapan) + "%");
 }
 
@@ -270,6 +311,7 @@ void urusMesej(int bilangan) {
     } else if (arahan == "/siram" || arahan == "/stop" || arahan == "/auto_on" ||
                arahan == "/auto_off" || arahan == "/ambang") {
       String balas = laksanaArahan(arahan.substring(1), nilai.toInt(), "Telegram");
+      paparMesej("Telegram: " + arahan);
       if (balas.length() > 0) bot.sendMessage(chatId, balas, "");
     } else if (arahan == "/kalibrasi") {
       String s = "🔧 KALIBRASI\nBacaan raw sekarang: " + String(bacaRaw()) + "\n\n";
@@ -315,7 +357,8 @@ void pollSkrip() {
   if (paksaData) q += "&paksa=1";
 
   String respons;
-  if (!panggilSkrip(q, respons)) return;
+  skripOK = panggilSkrip(q, respons);
+  if (!skripOK) return;
   paksaData = false;
 
   DynamicJsonDocument doc(2048);
@@ -328,6 +371,7 @@ void pollSkrip() {
     int nilai  = a["nilai"] | 0;
     Serial.printf("[SKRIP] Arahan panel web: %s %d\n", cmd.c_str(), nilai);
     String balas = laksanaArahan(cmd, nilai, "panel web");
+    paparMesej("Web: " + cmd + (nilai > 0 ? " " + String(nilai) : ""));
     if (balas.length() > 0) hantarSemua("🖥️ Panel web: " + balas);
   }
 }
@@ -359,6 +403,61 @@ void sambungWiFi() {
 }
 
 // ---------------- Setup & loop ----------------
+// ---------------- OLED ----------------
+// Susun atur 128x64 (OLED dua warna: 16 piksel atas kuning)
+//  KebunDemo      W o G o     <- WiFi / panel web (bulatan penuh = OK)
+//  Auto:ON   Ambang:40%
+//  42%        LEMBAP
+//             raw 2310
+//  Pam: HIDUP 4s
+//  Telegram: /siram        <- mesej sementara / IP
+void lukisOled() {
+  if (!oledOK) return;
+  bool wifi = (WiFi.status() == WL_CONNECTED);
+  oled.clearDisplay();
+  oled.setTextColor(SSD1306_WHITE);
+  oled.setTextSize(1);
+
+  // Baris atas
+  oled.setCursor(0, 0);  oled.print("KebunDemo");
+  oled.setCursor(84, 0); oled.print("W");
+  bulatan(95, wifi);
+  oled.setCursor(106, 0); oled.print("G");
+  bulatan(117, skripAktif && skripOK);
+  oled.setCursor(0, 8);
+  oled.print("Auto:"); oled.print(modAuto ? "ON " : "OFF");
+  oled.setCursor(62, 8);
+  oled.print("Ambang:"); oled.print(ambangKering); oled.print("%");
+
+  // Kelembapan besar
+  oled.setTextSize(3);
+  oled.setCursor(0, 20);
+  oled.print(sensorOK ? String(kelembapan) + "%" : "--");
+  oled.setTextSize(1);
+  oled.setCursor(76, 22);
+  oled.print(!sensorOK ? "ROSAK!" : (kelembapan < ambangKering ? "KERING" : "LEMBAP"));
+  oled.setCursor(76, 34);
+  oled.print("raw "); oled.print(rawSensor);
+
+  // Status pam (dengan kiraan detik)
+  oled.setCursor(0, 46);
+  if (pamHidup) {
+    long baki = ((long)pamTempoh - (long)(millis() - pamMula)) / 1000 + 1;
+    oled.print("Pam: HIDUP "); oled.print(max(0L, baki)); oled.print("s");
+    if ((millis() / 400) % 2) oled.fillRect(122, 46, 6, 7, SSD1306_WHITE);  // berkelip
+  } else {
+    oled.print("Pam: MATI  ("); oled.print(jumlahSiraman); oled.print("x)");
+  }
+
+  // Baris bawah: mesej sementara, atau IP / status
+  oled.setCursor(0, 56);
+  if (millis() < mesejOledTamat) oled.print(mesejOled);
+  else if (wifi) oled.print(WiFi.localIP());
+  else oled.print("Luar talian - auto OK");
+
+  oled.display();
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -377,7 +476,15 @@ void setup() {
   skripAktif = (String(SKRIP_URL).indexOf("XXXX") < 0);
 
   klienTelegram.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+  Wire.begin(PIN_SDA, PIN_SCL);
+  oledOK = oled.begin(SSD1306_SWITCHCAPVCC, OLED_ALAMAT);
+  if (!oledOK) Serial.println("[OLED] Tidak dijumpai. Sistem diteruskan tanpa paparan.");
+  oledBoot("Menyambung WiFi...", WIFI_SSID);
+
   sambungWiFi();
+  oledBoot(WiFi.status() == WL_CONNECTED ? "WiFi OK" : "WiFi GAGAL",
+           WiFi.status() == WL_CONNECTED ? WiFi.localIP().toString() : "Mod auto tetap jalan");
+  delay(1500);
 
   rawSensor  = bacaRaw();
   kelembapan = rawKePeratus(rawSensor);
@@ -419,6 +526,12 @@ void loop() {
   // Matikan pam bila tempoh tamat (had keselamatan sentiasa aktif)
   if (pamHidup && (millis() - pamMula >= pamTempoh)) {
     pamOff("tempoh siraman tamat");
+  }
+
+  // Paparan OLED
+  if (millis() - akhirOled >= SELA_OLED) {
+    akhirOled = millis();
+    lukisOled();
   }
 
   // 4. TELEFON (lapor & terima arahan)

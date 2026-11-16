@@ -1,4 +1,4 @@
-# KebunDemo v1.1: Siraman Pasu Pintar dengan Telegram + Panel Web
+# KebunDemo v1.3: Siraman Pasu Pintar dengan Telegram + Panel Web
 
 Projek demo untuk kursus Asas IoT untuk Pengurusan Kebun. Satu pasu bunga disiram secara automatik bila tanah kering, dan boleh dikawal melalui dua panel: bot Telegram dan panel web.
 
@@ -40,6 +40,7 @@ kebundemo-panel/
 | 7 | Kabel USB untuk ESP32 | 1 |
 | 8 | Wayar jumper (male-female, male-male) | 1 set |
 | 9 | Pasu bunga dengan tanah + bekas air kecil | 1 |
+| 10 | OLED 0.96" SSD1306 128×64 I2C | 1 |
 
 Pilihan: papan breadboard, kotak plastik untuk kemas.
 
@@ -55,6 +56,10 @@ Pilihan: papan breadboard, kotak plastik untuk kemas.
 | Relay VCC | VIN (5V) | |
 | Relay GND | GND | |
 | Relay IN | GPIO 26 | |
+| OLED VCC | 3V3 | |
+| OLED GND | GND | |
+| OLED SDA | GPIO 21 | |
+| OLED SCL | GPIO 22 | |
 
 **Litar pam (melalui relay):**
 
@@ -89,7 +94,7 @@ Untuk bot boleh baca arahan dalam group, di @BotFather taip `/setprivacy` → pi
 ## 4. Upload kod
 
 1. Arduino IDE → Boards Manager → pasang **esp32 by Espressif Systems**.
-2. Library Manager → pasang **UniversalTelegramBot** (Brian Lough) dan **ArduinoJson**.
+2. Library Manager → pasang **UniversalTelegramBot** (Brian Lough), **ArduinoJson**, **Adafruit SSD1306** dan **Adafruit GFX**.
 3. Buka `esp32/KebunDemo/KebunDemo.ino`, ubah bahagian **TETAPAN PENGGUNA**:
    - `WIFI_SSID`, `WIFI_PASS`
    - `BOT_TOKEN`
@@ -202,6 +207,33 @@ Tetapan ambang dan mod auto disimpan dalam memori ESP32, kekal walaupun kuasa te
 - Panel web **tidak serta-merta**: ESP32 ambil arahan setiap 15 saat. Telegram lebih pantas (1 saat).
 - Arahan yang tidak diambil dalam 5 minit dibatalkan, supaya pam tidak hidup mengejut bila ESP32 kembali dalam talian.
 - Kod ESP32 guna `setInsecure()` untuk sambungan ke Google (sesuai untuk demo). Untuk sistem sebenar, gunakan sijil root Google.
+
+---
+
+## 13. Paparan OLED (versi DevKit)
+
+OLED menunjukkan sistem hidup atau tidak dengan sekali pandang. Jika OLED tidak dipasang, sistem tetap berjalan seperti biasa.
+
+```
+┌────────────────────────┐
+│KebunDemo      W● G●    │  W = WiFi, G = Google/panel web (● OK, ○ gagal)
+│Auto:ON  Ambang:40%     │
+│42%        LEMBAP       │  kelembapan besar + keadaan
+│           raw 2310     │
+│Pam: HIDUP 4s        ■  │  kiraan detik, kotak berkelip semasa pam hidup
+│Telegram: /siram        │  arahan terkini (4 saat), kemudian alamat IP
+└────────────────────────┘
+```
+
+**Semakan cepat semasa demo:**
+
+| Dilihat di OLED | Maksud |
+|---|---|
+| W● G● | WiFi dan Google Sheet berhubung |
+| W● G○ | WiFi OK, Apps Script gagal (semak URL / kunci API) |
+| W○ | Tiada WiFi; siraman auto masih berjalan |
+| ROSAK! | Sensor tercabut atau rosak |
+| Skrin kosong | Semak wayar SDA/SCL, atau tukar `OLED_ALAMAT` ke `0x3D` |
 
 ---
 
