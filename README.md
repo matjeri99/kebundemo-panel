@@ -22,7 +22,7 @@ kebundemo-panel/
 ├── index.html                    Panel kawalan web (GitHub Pages)
 ├── apps-script/Code.gs           Backend Google Apps Script
 ├── esp32/KebunDemo/KebunDemo.ino Kod ESP32 DevKit
-└── esp32/KebunDemo_CYD/          Versi CYD dengan skrin sentuh (lihat bahagian 12)
+└── esp32/KebunDemo_CYD/          Versi CYD dengan skrin sentuh (lihat bahagian 13)
 ```
 
 ---
@@ -210,7 +210,7 @@ Tetapan ambang dan mod auto disimpan dalam memori ESP32, kekal walaupun kuasa te
 
 ---
 
-## 13. Paparan OLED (versi DevKit)
+## 12. Paparan OLED (versi DevKit)
 
 OLED menunjukkan sistem hidup atau tidak dengan sekali pandang. Jika OLED tidak dipasang, sistem tetap berjalan seperti biasa.
 
@@ -237,7 +237,7 @@ OLED menunjukkan sistem hidup atau tidak dengan sekali pandang. Jika OLED tidak 
 
 ---
 
-## 12. Versi CYD (ESP32-2432S028R) dengan skrin sentuh
+## 13. Versi CYD (ESP32-2432S028R) dengan skrin sentuh
 
 Fail: `esp32/KebunDemo_CYD/KebunDemo_CYD.ino`. Fungsi sama seperti versi DevKit, ditambah **panel ketiga**: skrin sentuh di pasu yang berfungsi walaupun tanpa internet.
 
