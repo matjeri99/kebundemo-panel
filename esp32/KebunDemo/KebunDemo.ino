@@ -535,16 +535,24 @@ void loop() {
     akhirBaca  = kini;
     rawSensor  = bacaRaw();
     kelembapan = rawKePeratus(rawSensor);
-    bool okBaru = (rawSensor > 200 && rawSensor < 4000);  // luar julat = wayar tercabut / rosak
-    if (sensorOK && !okBaru) {
-      hantarSemua("⚠️ Sensor bermasalah (raw " + String(rawSensor) + "). Mod auto ditangguhkan. Semak sambungan.");
-      tambahLog("AMARAN", "Sensor bermasalah, raw " + String(rawSensor));
+    // Semak sensor dengan histeresis: perlu 3 bacaan berturut-turut sebelum tukar status,
+    // supaya bacaan yang berlegar di sempadan tidak menghantar amaran berulang-ulang.
+    static int bilBaca = 0;
+    bool luarJulat  = (rawSensor < 300 || rawSensor > 4000);   // wayar tercabut / rosak
+    bool dalamJulat = (rawSensor >= 400 && rawSensor <= 3900); // jelas normal
+    if (sensorOK)  bilBaca = luarJulat  ? bilBaca + 1 : 0;
+    else           bilBaca = dalamJulat ? bilBaca + 1 : 0;
+    if (bilBaca >= 3) {
+      bilBaca  = 0;
+      sensorOK = !sensorOK;
+      if (!sensorOK) {
+        hantarSemua("⚠️ Sensor bermasalah (raw " + String(rawSensor) + "). Mod auto ditangguhkan. Semak sambungan.");
+        tambahLog("AMARAN", "Sensor bermasalah, raw " + String(rawSensor));
+      } else {
+        hantarSemua("✅ Sensor kembali normal (raw " + String(rawSensor) + ").");
+        tambahLog("INFO", "Sensor kembali normal");
+      }
     }
-    if (!sensorOK && okBaru) {
-      hantarSemua("✅ Sensor kembali normal.");
-      tambahLog("INFO", "Sensor kembali normal");
-    }
-    sensorOK = okBaru;
     Serial.printf("Raw: %d | Kelembapan: %d%% | Auto: %s | Pam: %s\n",
                   rawSensor, kelembapan, modAuto ? "ON" : "OFF", pamHidup ? "HIDUP" : "MATI");
   }
