@@ -52,6 +52,12 @@ const int     PIN_SDA     = 21;
 const int     PIN_SCL     = 22;
 const uint8_t OLED_ALAMAT = 0x3C;    // sesetengah modul guna 0x3D
 
+// Kontaktor (pilihan): sesentuh bantu 43-44 (NO) ke GPIO27 dan GND
+// true = ESP32 semak kontaktor betul-betul tertutup bila pam hidup
+const bool          PAKAI_KONTAKTOR       = false;
+const int           PIN_KONTAKTOR         = 27;
+const unsigned long MASA_SEMAK_KONTAKTOR  = 1500;  // ms masa kontaktor perlu bertindak
+
 // Kalibrasi sensor (guna arahan /kalibrasi untuk dapatkan nilai sebenar)
 int NILAI_KERING = 3000;  // bacaan raw sensor di udara / tanah kering
 int NILAI_BASAH  = 1300;  // bacaan raw sensor dalam air
@@ -84,6 +90,7 @@ unsigned long pamTempoh     = 0;
 unsigned long akhirSiram    = 0;
 bool          pernahSiram   = false;
 unsigned long jumlahSiraman = 0;
+bool amaranMelekat = false;  // elak amaran kontaktor melekat berulang
 
 unsigned long akhirBaca = 0, akhirBot = 0, akhirWifi = 0, akhirSkrip = 0;
 bool skripAktif = false;
@@ -259,6 +266,7 @@ String teksStatus() {
   s += "Mod auto: " + String(modAuto ? "ON" : "OFF") + "\n";
   s += "Pam: " + String(pamHidup ? "HIDUP" : "MATI") + "\n";
   s += "Siraman sejak hidup: " + String(jumlahSiraman) + " kali\n";
+  if (PAKAI_KONTAKTOR) s += "Kontaktor: " + String(kontaktorTertutup() ? "TERTUTUP" : "TERBUKA") + "\n";
   s += "Panel web: " + String(skripAktif ? "AKTIF" : "TIDAK DIGUNAKAN") + "\n";
   s += "WiFi: " + String(WiFi.RSSI()) + " dBm\n";
   s += "Masa hidup: " + masaHidup();
@@ -458,6 +466,30 @@ void lukisOled() {
   oled.display();
 }
 
+// ---------------- Kontaktor ----------------
+bool kontaktorTertutup() {
+  return digitalRead(PIN_KONTAKTOR) == LOW;  // 43-44 tertutup = pin ditarik ke GND
+}
+
+void semakKontaktor() {
+  // Pam sepatutnya hidup, tetapi kontaktor tidak tertutup
+  if (pamHidup && millis() - pamMula >= MASA_SEMAK_KONTAKTOR && !kontaktorTertutup()) {
+    pamOff("kontaktor tidak bertindak balas");
+    hantarSemua("🚨 AMARAN: Relay hidup tetapi kontaktor TIDAK tertutup.\nSemak bekalan 240V, MCB dan wayar A1/A2.");
+    tambahLog("AMARAN", "Kontaktor tidak bertindak balas");
+    paparMesej("AMARAN: kontaktor!");
+  }
+  // Pam sepatutnya mati, tetapi kontaktor masih tertutup (sesentuh melekat)
+  bool melekat = !pamHidup && pernahSiram && millis() - akhirSiram >= MASA_SEMAK_KONTAKTOR && kontaktorTertutup();
+  if (melekat && !amaranMelekat) {
+    amaranMelekat = true;
+    hantarSemua("🚨 AMARAN: Pam sepatutnya MATI tetapi kontaktor masih TERTUTUP.\nMatikan MCB pam dan semak kontaktor.");
+    tambahLog("AMARAN", "Kontaktor melekat");
+    paparMesej("AMARAN: melekat!");
+  }
+  if (!melekat) amaranMelekat = false;
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -465,6 +497,7 @@ void setup() {
   digitalWrite(PIN_RELAY, RELAY_AKTIF_LOW ? HIGH : LOW);
   pinMode(PIN_RELAY, OUTPUT);
   pinMode(PIN_LED, OUTPUT);
+  if (PAKAI_KONTAKTOR) pinMode(PIN_KONTAKTOR, INPUT_PULLUP);
   relayTulis(false);
 
   analogReadResolution(12);  // 0-4095
@@ -527,6 +560,9 @@ void loop() {
   if (pamHidup && (millis() - pamMula >= pamTempoh)) {
     pamOff("tempoh siraman tamat");
   }
+
+  // Semakan kontaktor (jika digunakan)
+  if (PAKAI_KONTAKTOR) semakKontaktor();
 
   // Paparan OLED
   if (millis() - akhirOled >= SELA_OLED) {

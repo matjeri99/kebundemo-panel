@@ -283,4 +283,35 @@ Pam tetap guna adaptor 5V sendiri melalui relay (COM / NO), sama seperti versi D
 
 ---
 
+## 14. Relay ESP-01/01S dan kontaktor (demo pam AC 240V)
+
+**Relay ESP-01/01S v4.0 tanpa modul ESP-01S** boleh dikawal terus oleh ESP32:
+
+| Relay ESP-01 | ESP32 DevKit |
+|---|---|
+| VCC (terminal 2 pin) | VIN (5V) |
+| GND | GND |
+| Pin GPIO0 pada soket kuning | GPIO26 |
+
+Sahkan pin GPIO0 pada soket dengan multimeter (continuity). Relay aktif LOW, sama seperti tetapan kod.
+
+**Kontaktor KMC-9 (gegelung 240V):**
+
+```
+Litar kawalan:  L 240V → Relay COM → Relay NO → A1
+                N 240V ─────────────────────→ A2
+Litar kuasa:    L → 1/L1 → 2/T1 → Pam L
+                N → 3/L2 → 4/T2 → Pam N
+Pengesahan:     43 (NO) → GPIO27,  44 (NO) → GND
+```
+
+Untuk guna pengesahan kontaktor, tetapkan `PAKAI_KONTAKTOR = true`. ESP32 akan:
+
+- Matikan relay dan hantar amaran jika kontaktor tidak tertutup dalam 1.5 saat selepas pam dihidupkan.
+- Hantar amaran jika kontaktor masih tertutup selepas pam dimatikan (sesentuh melekat).
+
+**Keselamatan:** litar 240V dalam kotak tertutup dengan MCB. Pendawaian mesti dibuat atau disemak oleh pendawai yang kompeten.
+
+---
+
 *SrieMatjeri*
