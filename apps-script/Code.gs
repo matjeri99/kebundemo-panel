@@ -11,6 +11,7 @@
  *   action=log     ESP32 hantar peristiwa (pam hidup/mati, tetapan)
  *   action=status  Panel web baca status, sejarah dan log
  *   action=cmd     Panel web hantar arahan (siram/stop/auto_on/auto_off/ambang)
+ *   POST           Borang tinjauan awam (borang.html), tanpa kunci, ke helaian Borang
  * ============================================================
  */
 
@@ -56,6 +57,43 @@ function doGet(e) {
       case 'cmd':    return keluar_(tambahArahan_(p));
       default:       return keluar_({ ok: false, ralat: 'Action tidak dikenali' });
     }
+  } catch (err) {
+    return keluar_({ ok: false, ralat: String(err) });
+  }
+}
+
+// ---------------- Borang tinjauan awam (tanpa kunci API) ----------------
+// Dihantar dari borang.html di GitHub Pages sebagai POST (text/plain, JSON).
+// Setiap jawapan = satu baris dalam helaian "Borang". Lajur dicipta automatik.
+function doPost(e) {
+  try {
+    const data = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (data.jenis !== 'borang') return keluar_({ ok: false, ralat: 'Jenis tidak sah' });
+    if (data.laman) return keluar_({ ok: true });  // perangkap spam (medan tersembunyi)
+    const r = data.jawapan || {};
+    const wajib = ['A1. Nama kebun', 'A4. Nama wakil', 'A6. No. telefon (WhatsApp)', 'C8. Status sistem pengairan / fertigasi'];
+    if (wajib.some(k => !r[k] || String(r[k]).trim() === '')) return keluar_({ ok: false, ralat: 'Medan wajib tidak lengkap' });
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const sh = ss.getSheetByName('Borang') || ss.insertSheet('Borang');
+      let tajuk = sh.getLastRow() > 0 ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : ['Masa'];
+      Object.keys(r).forEach(k => { if (!tajuk.includes(k)) tajuk.push(k); });
+      sh.getRange(1, 1, 1, tajuk.length).setValues([tajuk]).setFontWeight('bold');
+      sh.setFrozenRows(1);
+      const baris = tajuk.map(k => {
+        if (k === 'Masa') return new Date();
+        const v = r[k];
+        const teks = Array.isArray(v) ? v.join(', ') : (v === undefined ? '' : String(v));
+        return teks.slice(0, 1000);
+      });
+      sh.appendRow(baris);
+    } finally {
+      lock.releaseLock();
+    }
+    return keluar_({ ok: true });
   } catch (err) {
     return keluar_({ ok: false, ralat: String(err) });
   }

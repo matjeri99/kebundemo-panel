@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Borang Tinjauan Keperluan Kebun Komuniti · Program IoT Sub Zon 1</title>
+<meta name="description" content="Borang tinjauan keperluan IoT kebun komuniti Sub Zon 1 Putrajaya">
+<meta name="theme-color" content="#16301F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark: #16301F; --cream: #F5F2E9; --cream2: #E7EEDC; --card: #FFFDF7;
+    --leaf: #7CC255; --green: #356B1C; --red: #B3360B; --ink: #1D2A21; --muted: #56675B; --line: #D3DCC8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', sans-serif; background: var(--cream); color: var(--ink); font-size: 16px; line-height: 1.5; }
+  h1, h2 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; }
+  header { background: var(--dark); color: var(--cream); padding: 28px 20px 24px; }
+  header .wrap { max-width: 720px; margin: 0 auto; }
+  header small { display: block; color: var(--leaf); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
+  header h1 { font-size: 26px; line-height: 1.2; }
+  header p { margin: 10px 0 0; color: #C9D6C5; font-size: 15px; }
+  .kemajuan { position: sticky; top: 0; z-index: 5; height: 5px; background: var(--cream2); }
+  .kemajuan div { height: 100%; width: 0; background: var(--leaf); transition: width .3s; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }
+  .bahagian { background: var(--card); border-radius: 16px; padding: 22px 18px; margin-bottom: 16px; border-top: 6px solid var(--leaf); }
+  .bahagian h2 { font-size: 19px; color: var(--green); }
+  .bahagian > .ket { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+  .soalan { margin-top: 22px; }
+  .soalan > label.tajuk, .soalan > .tajuk { display: block; font-weight: 600; margin-bottom: 8px; }
+  .wajib { color: var(--red); }
+  .bantu { display: block; color: var(--muted); font-size: 13px; font-weight: 400; margin-top: 2px; }
+  input[type=text], input[type=tel], input[type=number], textarea {
+    width: 100%; font: inherit; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(124,194,85,.25); }
+  textarea { min-height: 84px; resize: vertical; }
+  .pilihan { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cip { position: relative; }
+  .cip input { position: absolute; opacity: 0; pointer-events: none; }
+  .cip span { display: inline-block; padding: 9px 14px; border: 1.5px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font-size: 15px; user-select: none; transition: background .15s, border-color .15s; }
+  .cip input:checked + span { background: var(--green); border-color: var(--green); color: #F7F5EE; font-weight: 600; }
+  .cip input:focus-visible + span { box-shadow: 0 0 0 3px rgba(124,194,85,.45); }
+  .skala { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .skala .cip span { width: 100%; text-align: center; padding: 10px 0; }
+  .skala-ket { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .lain { margin-top: 8px; display: none; }
+  .lain.papar { display: block; }
+  .ralat .tajuk { color: var(--red); }
+  .ralat input[type=text], .ralat input[type=tel] { border-color: var(--red); }
+  .mesej-ralat { display: none; color: var(--red); font-size: 13px; margin-top: 6px; }
+  .ralat .mesej-ralat { display: block; }
+  .hantar { width: 100%; font: inherit; font-weight: 700; font-size: 17px; padding: 16px; border: 0; border-radius: 12px; background: var(--green); color: #F7F5EE; cursor: pointer; }
+  .hantar:disabled { opacity: .6; cursor: wait; }
+  .status { text-align: center; margin-top: 12px; font-size: 14px; color: var(--red); min-height: 20px; }
+  .terima { text-align: center; padding: 40px 20px; }
+  .terima .ikon { font-size: 54px; }
+  .terima h2 { color: var(--green); margin: 10px 0; }
+  .terima button { margin-top: 16px; font: inherit; padding: 10px 18px; border-radius: 10px; border: 1.5px solid var(--green); background: transparent; color: var(--green); font-weight: 600; cursor: pointer; }
+  .tersembunyi { display: none !important; }
+  .perangkap { position: absolute; left: -9999px; }
+  footer { text-align: center; font-size: 12px; color: var(--muted); padding: 0 0 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <small>Program Aplikasi IoT · Kebun Komuniti Sub Zon 1</small>
+    <h1>Borang Tinjauan Keperluan Kebun Komuniti</h1>
+    <p>Jawapan anda membantu kami memadankan sistem IoT dengan fasiliti sebenar kebun anda. Satu borang untuk satu kebun. Anggaran masa: 7 minit.</p>
+  </div>
+</header>
+<div class="kemajuan"><div id="bar"></div></div>
+
+<main>
+  <form id="borang" novalidate></form>
+  <section id="terima" class="bahagian terima tersembunyi">
+    <div class="ikon">🌱</div>
+    <h2>Terima kasih!</h2>
+    <p>Jawapan untuk <b id="namaTerima"></b> telah diterima. Kami akan menghubungi wakil kebun untuk perbincangan seterusnya.</p>
+    <button type="button" id="lagi">Isi borang untuk kebun lain</button>
+  </section>
+</main>
+
+<footer>Program Aplikasi IoT di Kebun Komuniti Sub Zon 1 · AgroFix Malaysia / D77Tech · <i>SrieMatjeri</i></footer>
+
+<script>
+const SKRIP_URL = 'https://script.google.com/macros/s/AKfycbyR_lLo00KKktvE1oYMdEHWqJ39hsJLjOxLcv9UCarO7XXhM2V-TOQCAVY3WSykdntvog/exec';
+
+const SKALA_FAHAM = ['Tidak tahu', 'Boleh ajar'];
+const KEUTAMAAN = ['Tinggi', 'Sederhana', 'Rendah', 'Tidak perlu'];
+
+// ty: text | tel | number | textarea | radio | checkbox | skala | keutamaan
+const BORANG = [
+  { t: 'A. Maklumat kebun', s: [
+    { n: 'A1. Nama kebun', ty: 'radio', req: 1, lain: 1,
+      o: ['Kebun Komuniti Presint 5', 'Kebun Komuniti Presint 6', 'Kebun Komuniti Presint 17', 'Kebun Komuniti Presint 18', 'Kebun Komuniti Presint 16', 'Lain-lain'] },
+    { n: 'A2. Keluasan kebun', ty: 'text', ph: 'contoh: 0.5 ekar atau 30 x 20 meter' },
+    { n: 'A3. Bilangan ahli aktif', ty: 'number', ph: 'contoh: 15' },
+    { n: 'A4. Nama wakil', ty: 'text', req: 1 },
+    { n: 'A5. Jawatan dalam kebun', ty: 'text', ph: 'contoh: Pengerusi, Setiausaha, AJK' },
+    { n: 'A6. No. telefon (WhatsApp)', ty: 'tel', req: 1, ph: 'contoh: 0123456789' },
+  ]},
+  { t: 'B. Kefahaman selepas kursus', d: 'Nilai diri anda: 1 = tidak tahu langsung, 5 = boleh ajar orang lain.', s: [
+    { n: 'B1. Saya faham maksud IoT (Internet of Things)', ty: 'skala' },
+    { n: 'B2. Saya boleh menerangkan formula sensor, pengawal, aktuator dan telefon', ty: 'skala' },
+    { n: 'B3. Saya kenal jenis sensor yang digunakan di kebun', ty: 'skala' },
+    { n: 'B4. Saya tahu cara mengawal pam melalui telefon', ty: 'skala' },
+    { n: 'B5. Saya boleh membaca data pH dan TDS dan tahu tindakan yang perlu', ty: 'skala' },
+    { n: 'B6. Saya faham keperluan asas sistem solar untuk kebun', ty: 'skala' },
+    { n: 'B7. Saya yakin kebun saya boleh menggunakan IoT', ty: 'skala' },
+    { n: 'B8. Dengan perkataan anda sendiri, apakah IoT?', ty: 'textarea' },
+  ]},
+  { t: 'C. Fasiliti sedia ada di kebun', d: 'Kami hanya menaik taraf sistem kawalan. Bahagian ini membantu kami tahu apa yang sudah ada.', s: [
+    { n: 'C1. Sumber air', ty: 'checkbox', o: ['Paip bekalan air utama', 'Tangki simpanan', 'Tadahan air hujan', 'Kolam / telaga / longkang'] },
+    { n: 'C1b. Kapasiti tangki (liter) dan jarak sumber air ke tanaman', ty: 'text', ph: 'contoh: 1000 liter, 20 meter' },
+    { n: 'C2. Bekalan elektrik', ty: 'radio', o: ['TNB di tapak kebun', 'TNB berdekatan', 'Sistem solar sedia ada', 'Tiada bekalan elektrik'] },
+    { n: 'C2b. Butiran elektrik / solar', ty: 'text', ph: 'contoh: TNB 30 m dari kebun, atau panel 200W bateri 40Ah' },
+    { n: 'C3. Liputan internet', ty: 'radio', o: ['WiFi di tapak', 'Data telefon baik', 'Lemah / terputus-putus', 'Tiada liputan'] },
+    { n: 'C4. Struktur dan kemudahan', ty: 'checkbox', o: ['Rumah pelindung hujan', 'Rumah / jaring teduhan', 'Stor berkunci', 'Pagar keliling', 'Kawasan terbuka sahaja'] },
+    { n: 'C5. Sistem pengairan sedia ada', ty: 'checkbox', o: ['Siram manual / hos', 'Renjis (sprinkler)', 'Titis (drip)', 'Fertigasi polibeg', 'Pam sedia ada'] },
+    { n: 'C5b. Jenis dan kuasa pam (jika ada)', ty: 'text', ph: 'contoh: pam AC 0.5 HP' },
+    { n: 'C6. Tanaman utama dan kaedah tanam', ty: 'textarea', ph: 'contoh: cili 300 polibeg, sawi atas batas, kangkung hidroponik' },
+    { n: 'C7. Keselamatan', ty: 'checkbox', o: ['Pernah berlaku kecurian', 'Ada CCTV / pengawal', 'Kawasan mudah dimasuki orang luar'] },
+    { n: 'C8. Status sistem pengairan / fertigasi', ty: 'radio', req: 1,
+      o: ['Sudah siap dan berfungsi (manual / separa manual)', 'Separuh siap', 'Belum ada, masih dalam perancangan'] },
+  ]},
+  { t: 'D. Keperluan sistem', s: [
+    { n: 'D1. Masalah utama kebun', ty: 'checkbox', maks: 3, bantu: 'Pilih maksimum 3.',
+      o: ['Siraman tidak konsisten', 'Kekurangan ahli / sukarelawan', 'Pembaziran air', 'Pembajaan tidak tepat', 'Tanaman layu akibat panas', 'Tangki kering tanpa disedari', 'Kecurian alat / hasil', 'Tiada rekod hasil dan aktiviti', 'Lain-lain'] },
+    { n: 'D2. Pengairan automatik', ty: 'keutamaan', kump: 'D2. Keutamaan sistem IoT' },
+    { n: 'D2. Fertigasi / dos baja automatik', ty: 'keutamaan' },
+    { n: 'D2. Elak siram bila hujan', ty: 'keutamaan' },
+    { n: 'D2. Pemantauan paras air tangki', ty: 'keutamaan' },
+    { n: 'D2. Kabus / penyejukan', ty: 'keutamaan' },
+    { n: 'D2. Hidroponik / akuaponik', ty: 'keutamaan' },
+    { n: 'D2. Lampu tumbesaran', ty: 'keutamaan' },
+    { n: 'D2. Sistem tenaga solar', ty: 'keutamaan' },
+    { n: 'D2. Keselamatan kebun (kamera, sensor gerakan)', ty: 'keutamaan' },
+    { n: 'D2. Pemantauan kompos', ty: 'keutamaan' },
+    { n: 'D3. Huraikan sistem utama yang anda mahu', ty: 'textarea', ph: 'Apa yang perlu dirasa (sensor), dibuat (pam/injap) dan dilaporkan ke telefon?' },
+  ]},
+  { t: 'E. Sumber dan komitmen', s: [
+    { n: 'E1. Anggaran bajet', ty: 'radio', o: ['Bawah RM500', 'RM500 hingga RM2,000', 'RM2,000 hingga RM5,000', 'Lebih RM5,000', 'Bergantung pada peruntukan / tajaan'] },
+    { n: 'E2. Sumber dana yang mungkin', ty: 'checkbox', o: ['Tabung / yuran ahli', 'Peruntukan Perbadanan Putrajaya / MPPWP', 'Tajaan / CSR syarikat', 'Lain-lain'] },
+    { n: 'E3. Ahli yang mahir teknikal (nama dan telefon)', ty: 'text', ph: 'elektrik, elektronik, paip atau IT' },
+    { n: 'E4. Siapa akan menjaga sistem setiap hari? (nama dan telefon)', ty: 'text' },
+    { n: 'E5. Bila kebun mahu mula?', ty: 'radio', o: ['Dalam 3 bulan', 'Dalam 6 bulan', 'Tahun 2027', 'Belum pasti'] },
+  ]},
+  { t: 'F. Maklum balas kursus', s: [
+    { n: 'F1. Kepuasan keseluruhan terhadap kursus', ty: 'skala', ket: ['Tidak puas', 'Sangat puas'] },
+    { n: 'F2. Bahagian kursus yang paling berguna', ty: 'textarea' },
+    { n: 'F3. Berminat menyertai kursus lanjutan?', ty: 'radio', o: ['Ya', 'Mungkin', 'Tidak'] },
+    { n: 'F4. Cadangan atau komen lain', ty: 'textarea' },
+  ]},
+];
+
+// ---------------- Bina borang ----------------
+const form = document.getElementById('borang');
+let id = 0;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function binaSoalan(q) {
+  const kid = 'q' + (id++);
+  const wajib = q.req ? ' <span class="wajib">*</span>' : '';
+  const bantu = q.bantu ? `<span class="bantu">${esc(q.bantu)}</span>` : '';
+  let h = `<div class="soalan" data-n="${esc(q.n)}" data-ty="${q.ty}"${q.req ? ' data-req="1"' : ''}${q.maks ? ` data-maks="${q.maks}"` : ''}>`;
+  if (['text', 'tel', 'number', 'textarea'].includes(q.ty)) {
+    h += `<label class="tajuk" for="${kid}">${esc(q.n)}${wajib}${bantu}</label>`;
+    h += q.ty === 'textarea'
+      ? `<textarea id="${kid}" placeholder="${esc(q.ph || '')}"></textarea>`
+      : `<input id="${kid}" type="${q.ty}" placeholder="${esc(q.ph || '')}" ${q.ty === 'tel' ? 'inputmode="tel" autocomplete="tel"' : ''}>`;
+  } else {
+    const label = q.ty === 'keutamaan' ? q.n.replace(/^D2\. /, '') : q.n;
+    h += `<span class="tajuk">${esc(label)}${wajib}${bantu}</span>`;
+    const jenis = (q.ty === 'checkbox') ? 'checkbox' : 'radio';
+    const ops = q.ty === 'skala' ? ['1', '2', '3', '4', '5'] : q.ty === 'keutamaan' ? KEUTAMAAN : q.o;
+    h += `<div class="${q.ty === 'skala' ? 'skala' : 'pilihan'}" role="${jenis === 'radio' ? 'radiogroup' : 'group'}">`;
+    ops.forEach(o => {
+      h += `<label class="cip"><input type="${jenis}" name="${kid}" value="${esc(o)}"><span>${esc(o)}</span></label>`;
+    });
+    h += '</div>';
+    if (q.ty === 'skala') {
+      const k = q.ket || SKALA_FAHAM;
+      h += `<div class="skala-ket"><span>${esc(k[0])}</span><span>${esc(k[1])}</span></div>`;
+    }
+    if (q.lain || (q.o && q.o.includes('Lain-lain'))) {
+      h += `<input type="text" class="lain" placeholder="Nyatakan">`;
+    }
+  }
+  h += `<div class="mesej-ralat">Sila lengkapkan soalan ini.</div></div>`;
+  return h;
+}
+
+let html = '';
+BORANG.forEach(b => {
+  html += `<section class="bahagian"><h2>${esc(b.t)}</h2>${b.d ? `<p class="ket">${esc(b.d)}</p>` : ''}`;
+  b.s.forEach(q => {
+    if (q.kump) html += `<div class="soalan"><span class="tajuk">${esc(q.kump)}<span class="bantu">Pilih keutamaan untuk setiap sistem.</span></span></div>`;
+    html += binaSoalan(q);
+  });
+  html += '</section>';
+});
+html += `<input class="perangkap" type="text" name="laman" tabindex="-1" autocomplete="off" aria-hidden="true">`;
+html += `<button class="hantar" type="submit" id="btnHantar">Hantar borang</button><div class="status" id="status"></div>`;
+form.innerHTML = html;
+
+// "Lain-lain" papar kotak teks; had pilihan maksimum
+form.addEventListener('change', e => {
+  const sq = e.target.closest('.soalan');
+  if (!sq) return;
+  sq.classList.remove('ralat');
+  const lain = sq.querySelector('.lain');
+  if (lain) {
+    const dipilih = [...sq.querySelectorAll('input:checked')].some(i => i.value === 'Lain-lain');
+    lain.classList.toggle('papar', dipilih);
+  }
+  const maks = Number(sq.dataset.maks || 0);
+  if (maks && e.target.type === 'checkbox' && e.target.checked) {
+    const bil = sq.querySelectorAll('input[type=checkbox]:checked').length;
+    if (bil > maks) { e.target.checked = false; tunjukStatus('Pilih maksimum ' + maks + ' sahaja.'); }
+  }
+  kemajuan();
+});
+form.addEventListener('input', e => { const sq = e.target.closest('.soalan'); if (sq) sq.classList.remove('ralat'); kemajuan(); });
+
+function nilaiSoalan(sq) {
+  const ty = sq.dataset.ty;
+  if (['text', 'tel', 'number'].includes(ty)) return sq.querySelector('input').value.trim();
+  if (ty === 'textarea') return sq.querySelector('textarea').value.trim();
+  const lainEl = sq.querySelector('.lain');
+  const nilai = [...sq.querySelectorAll('input:checked')].map(i =>
+    i.value === 'Lain-lain' && lainEl && lainEl.value.trim() ? 'Lain-lain: ' + lainEl.value.trim() : i.value);
+  return ty === 'checkbox' ? nilai.join(', ') : (nilai[0] || '');
+}
+
+function kemajuan() {
+  const semua = [...form.querySelectorAll('.soalan[data-ty]')];
+  const dijawab = semua.filter(sq => nilaiSoalan(sq) !== '').length;
+  document.getElementById('bar').style.width = Math.round(100 * dijawab / semua.length) + '%';
+}
+
+function tunjukStatus(m) {
+  const s = document.getElementById('status');
+  s.textContent = m;
+  clearTimeout(s._h);
+  s._h = setTimeout(() => (s.textContent = ''), 5000);
+}
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const jawapan = {};
+  let pertamaRalat = null;
+  form.querySelectorAll('.soalan[data-ty]').forEach(sq => {
+    const v = nilaiSoalan(sq);
+    jawapan[sq.dataset.n] = v;
+    if (sq.dataset.req && !v) { sq.classList.add('ralat'); pertamaRalat = pertamaRalat || sq; }
+  });
+  if (pertamaRalat) {
+    pertamaRalat.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tunjukStatus('Sila lengkapkan soalan bertanda *.');
+    return;
+  }
+  const btn = document.getElementById('btnHantar');
+  btn.disabled = true;
+  btn.textContent = 'Menghantar...';
+  try {
+    const r = await fetch(SKRIP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ jenis: 'borang', laman: form.laman.value, jawapan }),
+    });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.ralat || 'Ralat pelayan');
+    document.getElementById('namaTerima').textContent = jawapan['A1. Nama kebun'];
+    form.classList.add('tersembunyi');
+    document.getElementById('terima').classList.remove('tersembunyi');
+    document.getElementById('bar').style.width = '100%';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    tunjukStatus('Gagal menghantar (' + err.message + '). Semak internet dan cuba lagi.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Hantar borang';
+  }
+});
+
+document.getElementById('lagi').addEventListener('click', () => {
+  form.reset();
+  form.querySelectorAll('.lain').forEach(l => l.classList.remove('papar'));
+  form.classList.remove('tersembunyi');
+  document.getElementById('terima').classList.add('tersembunyi');
+  kemajuan();
+  window.scrollTo({ top: 0 });
+});
+</script>
+</body>
+</html>

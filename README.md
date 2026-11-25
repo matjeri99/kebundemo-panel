@@ -315,3 +315,10 @@ Untuk guna pengesahan kontaktor, tetapkan `PAKAI_KONTAKTOR = true`. ESP32 akan:
 ---
 
 *SrieMatjeri*
+
+## 15. Borang tinjauan awam
+
+Pautan awam: `https://matjeri99.github.io/kebundemo-panel/borang.html`
+
+- Jawapan dihantar ke Apps Script (`doPost`, tanpa kunci API) dan disimpan dalam helaian **Borang** dalam Google Sheet yang sama.
+- Selepas mengemas kini `Code.gs`: Deploy → Manage deployments → Edit → Version: **New version** → Deploy. URL kekal sama.
